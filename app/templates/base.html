@@ -1,0 +1,101 @@
+<!DOCTYPE html>
+<html lang="en" class="dark">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>{{ project_name }} - {{ tagline }}</title>
+    
+    <!-- Tailwind CSS CDN -->
+    <script src="https://cdn.tailwindcss.com"></script>
+    <script>
+      tailwind.config = {
+        darkMode: 'class',
+        theme: {
+          extend: {
+            colors: {
+              space: {
+                950: '#070b14',
+                900: '#0e1526',
+                850: '#131c33',
+                800: '#1e293b',
+              },
+              cyan: {
+                400: '#22d3ee',
+                500: '#06b6d4',
+                600: '#0891b2',
+              }
+            }
+          }
+        }
+      }
+    </script>
+    
+    <!-- HTMX -->
+    <script src="https://unpkg.com/htmx.org@1.9.12"></script>
+    
+    <!-- Custom CSS -->
+    <link rel="stylesheet" href="/static/css/main.css">
+</head>
+<body class="min-h-screen bg-space-950 text-slate-100 flex flex-col antialiased">
+    <!-- Header / Navbar -->
+    <header class="border-b border-space-800 bg-space-900/90 backdrop-blur sticky top-0 z-50">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 h-16 flex items-center justify-between">
+            <div class="flex items-center gap-3">
+                <div class="w-9 h-9 rounded-lg bg-gradient-to-tr from-cyan-600 to-teal-400 flex items-center justify-center shadow-lg shadow-cyan-500/20">
+                    <svg class="w-5 h-5 text-space-950" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                    </svg>
+                </div>
+                <div>
+                    <a href="/" class="text-xl font-black tracking-tight text-white flex items-center gap-1.5">
+                        <span class="text-cyan-400">TENALI</span><span>AI</span>
+                    </a>
+                    <p class="text-[11px] text-slate-400 font-medium leading-none">{{ tagline }}</p>
+                </div>
+            </div>
+
+            <!-- Telemetry & Status Badges -->
+            <div class="flex items-center gap-3">
+                <div class="hidden sm:flex items-center gap-2 px-2.5 py-1 rounded-full bg-space-800/80 border border-slate-700/60 text-xs">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400 pulse-live"></span>
+                    <span class="text-slate-300 font-mono text-[11px]">AI ENGINE READY</span>
+                </div>
+
+                {% if demo_mode %}
+                <div class="px-2.5 py-1 rounded-full bg-amber-950/80 border border-amber-800/80 text-amber-300 text-xs font-semibold tracking-wide flex items-center gap-1.5">
+                    <span class="w-1.5 h-1.5 rounded-full bg-amber-400"></span>
+                    <span>DEMO MODE ACTIVE</span>
+                </div>
+                {% endif %}
+
+                <span class="px-2.5 py-1 rounded-md bg-cyan-950 border border-cyan-800 text-cyan-300 text-xs font-mono font-bold">
+                    {{ sih_id }}
+                </span>
+            </div>
+        </div>
+    </header>
+
+    <!-- Main Content -->
+    <main class="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-6">
+        {% block content %}{% endblock %}
+    </main>
+
+    <!-- Footer -->
+    <footer class="border-t border-space-800 bg-space-900/60 py-4 text-xs text-slate-500">
+        <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 flex flex-col sm:flex-row items-center justify-between gap-2">
+            <div>
+                <strong class="text-slate-400">TENALI AI</strong> &mdash; SIH 26167 Remote Sensing Vision-Language Assistant
+            </div>
+            <div class="flex items-center gap-4 text-[11px]">
+                <span>Theme: Space Technology</span>
+                <span>&bull;</span>
+                <span>FastAPI + HTMX + Python</span>
+            </div>
+        </div>
+    </footer>
+
+    <!-- Scripts -->
+    <script src="/static/js/app.js"></script>
+    <script src="/static/js/viewer.js"></script>
+</body>
+</html>

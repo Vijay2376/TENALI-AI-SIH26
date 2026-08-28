@@ -1,0 +1,211 @@
+{% extends "base.html" %}
+
+{% block content %}
+<div class="space-y-6">
+
+    <!-- Top Hero Banner / Quick Intro -->
+    <div class="bg-gradient-to-r from-space-900 via-space-850 to-space-900 border border-space-800 rounded-2xl p-6 shadow-xl relative overflow-hidden eo-grid-pattern">
+        <div class="relative z-10 max-w-3xl">
+            <span class="px-2.5 py-0.5 rounded-full bg-cyan-950 border border-cyan-800 text-cyan-400 text-xs font-semibold uppercase tracking-wider">
+                Agentic Earth Observation Intelligence
+            </span>
+            <h1 class="text-2xl sm:text-3xl font-extrabold text-white mt-2 tracking-tight">
+                Query-Driven Multimodal Remote Sensing Analysis
+            </h1>
+            <p class="text-sm text-slate-300 mt-2 leading-relaxed">
+                TENALI AI dynamically orchestrates specialist remote-sensing models and image processing pipelines to answer natural language questions over satellite imagery with verifiable visual evidence.
+            </p>
+        </div>
+    </div>
+
+    <!-- Interactive Analysis Workspace -->
+    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+
+        <!-- Left Column: Input Controls & File Upload (5 cols) -->
+        <div class="lg:col-span-5 space-y-5">
+            <div class="bg-space-900 border border-space-800 rounded-2xl p-5 shadow-lg">
+                <h2 class="text-sm font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-2 mb-4">
+                    <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
+                    <span>1. Select Configuration & Imagery</span>
+                </h2>
+
+                <!-- Mode Selector Tabs -->
+                <div class="grid grid-cols-3 gap-2 mb-5">
+                    <label class="mode-tab-label cursor-pointer text-center py-2 px-1 rounded-xl border border-cyan-500 bg-cyan-950 text-cyan-400 text-xs font-bold transition" data-mode="single">
+                        <input type="radio" name="mode_selector" value="single" class="hidden" checked>
+                        <span>Single Image</span>
+                    </label>
+                    <label class="mode-tab-label cursor-pointer text-center py-2 px-1 rounded-xl border border-space-800 text-slate-400 text-xs font-bold transition hover:text-white" data-mode="bi_temporal">
+                        <input type="radio" name="mode_selector" value="bi_temporal" class="hidden">
+                        <span>Bi-Temporal</span>
+                    </label>
+                    <label class="mode-tab-label cursor-pointer text-center py-2 px-1 rounded-xl border border-space-800 text-slate-400 text-xs font-bold transition hover:text-white" data-mode="optical_sar">
+                        <input type="radio" name="mode_selector" value="optical_sar" class="hidden">
+                        <span>Optical + SAR</span>
+                    </label>
+                </div>
+
+                <!-- Form targeting /analyze with HTMX -->
+                <form id="analyze-form"
+                      hx-post="/analyze"
+                      hx-target="#result-container"
+                      hx-swap="innerHTML"
+                      hx-indicator="#analysis-loading"
+                      hx-encoding="multipart/form-data"
+                      enctype="multipart/form-data"
+                      class="space-y-4">
+                    
+                    <input type="hidden" id="input-mode-hidden" name="mode" value="single">
+
+                    <!-- ZONE A: Single Image Upload -->
+                    <div id="zone-single" class="space-y-3">
+                        <label class="block text-xs font-medium text-slate-300">Satellite Image (GeoTIFF / TIFF / PNG / JPG)</label>
+                        <div class="dropzone-container relative border-2 border-dashed border-space-800 hover:border-cyan-500/60 rounded-xl p-4 text-center cursor-pointer transition bg-space-950/40">
+                            <input type="file" name="images" accept=".tif,.tiff,.png,.jpg,.jpeg" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
+                            <div class="dropzone-preview hidden"></div>
+                            <div class="dropzone-prompt space-y-1">
+                                <svg class="w-8 h-8 text-cyan-500/60 mx-auto" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 16a4 4 0 01-.88-7.903A5 5 0 1115.9 6L16 6a5 5 0 011 9.9M15 13l-3-3m0 0l-3 3m3-3v12"></path></svg>
+                                <p class="text-xs text-slate-200 font-medium">Click or Drag & Drop Satellite Image</p>
+                                <p class="text-[10px] text-slate-400">GeoTIFF, Multispectral, or Standard Rasters</p>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ZONE B: Bi-Temporal T1 + T2 Upload -->
+                    <div id="zone-bitemporal" class="hidden space-y-3">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-cyan-300 mb-1">Time 1 (T1 Image)</label>
+                                <div class="dropzone-container relative border-2 border-dashed border-space-800 hover:border-cyan-500/60 rounded-xl p-3 text-center cursor-pointer transition bg-space-950/40">
+                                    <input type="file" name="t1" accept=".tif,.tiff,.png,.jpg,.jpeg" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
+                                    <div class="dropzone-preview hidden"></div>
+                                    <div class="dropzone-prompt py-2">
+                                        <p class="text-xs text-slate-300 font-bold">Select T1</p>
+                                        <p class="text-[10px] text-slate-400">Pre-event baseline</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-cyan-300 mb-1">Time 2 (T2 Image)</label>
+                                <div class="dropzone-container relative border-2 border-dashed border-space-800 hover:border-cyan-500/60 rounded-xl p-3 text-center cursor-pointer transition bg-space-950/40">
+                                    <input type="file" name="t2" accept=".tif,.tiff,.png,.jpg,.jpeg" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
+                                    <div class="dropzone-preview hidden"></div>
+                                    <div class="dropzone-prompt py-2">
+                                        <p class="text-xs text-slate-300 font-bold">Select T2</p>
+                                        <p class="text-[10px] text-slate-400">Post-event target</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- ZONE C: Optical + SAR Upload -->
+                    <div id="zone-optical-sar" class="hidden space-y-3">
+                        <div class="grid grid-cols-2 gap-3">
+                            <div>
+                                <label class="block text-xs font-medium text-emerald-400 mb-1">Optical Sensor</label>
+                                <div class="dropzone-container relative border-2 border-dashed border-space-800 hover:border-emerald-500/60 rounded-xl p-3 text-center cursor-pointer transition bg-space-950/40">
+                                    <input type="file" name="optical" accept=".tif,.tiff,.png,.jpg,.jpeg" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
+                                    <div class="dropzone-preview hidden"></div>
+                                    <div class="dropzone-prompt py-2">
+                                        <p class="text-xs text-slate-300 font-bold">Select Optical</p>
+                                        <p class="text-[10px] text-slate-400">Spectral reflectance</p>
+                                    </div>
+                                </div>
+                            </div>
+                            <div>
+                                <label class="block text-xs font-medium text-amber-400 mb-1">SAR Radar Sensor</label>
+                                <div class="dropzone-container relative border-2 border-dashed border-space-800 hover:border-amber-500/60 rounded-xl p-3 text-center cursor-pointer transition bg-space-950/40">
+                                    <input type="file" name="sar" accept=".tif,.tiff,.png,.jpg,.jpeg" class="absolute inset-0 opacity-0 cursor-pointer w-full h-full">
+                                    <div class="dropzone-preview hidden"></div>
+                                    <div class="dropzone-prompt py-2">
+                                        <p class="text-xs text-slate-300 font-bold">Select SAR</p>
+                                        <p class="text-[10px] text-slate-400">Radar backscatter</p>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+                    </div>
+
+                    <!-- Query Input -->
+                    <div class="space-y-2 pt-2">
+                        <label class="block text-xs font-bold uppercase tracking-wider text-cyan-400 flex items-center justify-between">
+                            <span>2. Natural Language Query</span>
+                            <span class="text-[10px] text-slate-400 font-normal">Ask in plain English</span>
+                        </label>
+                        <div class="relative">
+                            <textarea id="query-input"
+                                      name="query"
+                                      rows="3"
+                                      required
+                                      placeholder="Ask something about your satellite imagery (e.g. 'Describe land cover', 'Highlight the water body', 'What changed between these dates?')"
+                                      class="w-full bg-space-950 border border-space-800 focus:border-cyan-500 focus:ring-1 focus:ring-cyan-500 rounded-xl p-3 text-sm text-slate-100 placeholder-slate-500 resize-none transition"></textarea>
+                        </div>
+                    </div>
+
+                    <!-- Submit Button -->
+                    <button type="submit"
+                            class="w-full py-3.5 px-4 bg-gradient-to-r from-cyan-600 to-teal-500 hover:from-cyan-500 hover:to-teal-400 text-space-950 font-extrabold text-sm rounded-xl shadow-lg shadow-cyan-600/25 transition transform active:scale-[0.99] flex items-center justify-center gap-2">
+                        <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2.5" d="M14.752 11.168l-3.197-2.132A1 1 0 0010 9.87v4.263a1 1 0 001.555.832l3.197-2.132a1 1 0 000-1.664z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                        <span>RUN AGENTIC ANALYSIS</span>
+                    </button>
+                </form>
+
+                <!-- Example Query Chips -->
+                <div class="mt-4 pt-4 border-t border-space-800 space-y-2">
+                    <p class="text-[11px] text-slate-400 uppercase font-semibold">Representative Queries:</p>
+                    <div class="flex flex-wrap gap-1.5">
+                        <button type="button" class="query-example-chip text-[11px] bg-space-950 border border-slate-800 hover:border-cyan-500/60 px-2.5 py-1 rounded-lg text-slate-300 hover:text-cyan-300 transition" data-mode="single" data-query="Describe the land-cover and major objects visible in this image.">
+                            Describe scene
+                        </button>
+                        <button type="button" class="query-example-chip text-[11px] bg-space-950 border border-slate-800 hover:border-cyan-500/60 px-2.5 py-1 rounded-lg text-slate-300 hover:text-cyan-300 transition" data-mode="single" data-query="Highlight the water body.">
+                            Highlight water
+                        </button>
+                        <button type="button" class="query-example-chip text-[11px] bg-space-950 border border-slate-800 hover:border-cyan-500/60 px-2.5 py-1 rounded-lg text-slate-300 hover:text-cyan-300 transition" data-mode="bi_temporal" data-query="What changed between these two dates?">
+                            Detect change
+                        </button>
+                        <button type="button" class="query-example-chip text-[11px] bg-space-950 border border-slate-800 hover:border-cyan-500/60 px-2.5 py-1 rounded-lg text-slate-300 hover:text-cyan-300 transition" data-mode="bi_temporal" data-query="Has the built-up area increased, decreased, or remained unchanged?">
+                            Built-up trend
+                        </button>
+                        <button type="button" class="query-example-chip text-[11px] bg-space-950 border border-slate-800 hover:border-cyan-500/60 px-2.5 py-1 rounded-lg text-slate-300 hover:text-cyan-300 transition" data-mode="optical_sar" data-query="Use the optical and SAR images together to identify built-up and water-covered regions.">
+                            Optical + SAR fusion
+                        </button>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+        <!-- Right Column: Results & Interactive Visual Evidence Viewer (7 cols) -->
+        <div class="lg:col-span-7">
+            <!-- Loading State Indicator -->
+            <div id="analysis-loading" class="htmx-indicator bg-space-900 border border-space-800 rounded-2xl p-12 text-center shadow-xl space-y-4">
+                <div class="w-12 h-12 border-4 border-cyan-500/20 border-t-cyan-400 rounded-full animate-spin mx-auto"></div>
+                <div class="space-y-1">
+                    <p class="text-base font-bold text-white">TENALI AI Orchestration Active</p>
+                    <p class="text-xs text-slate-400 font-mono">Ingesting imagery &bull; Selecting specialist tools &bull; Generating evidence...</p>
+                </div>
+            </div>
+
+            <!-- Dynamic Result Container -->
+            <div id="result-container" class="space-y-6">
+                <!-- Initial Placeholder Card -->
+                <div class="bg-space-900 border border-space-800 rounded-2xl p-10 text-center shadow-lg space-y-4">
+                    <div class="w-16 h-16 rounded-2xl bg-space-950 border border-space-800 flex items-center justify-center mx-auto text-cyan-400">
+                        <svg class="w-8 h-8 opacity-80" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="1.5" d="M9 20l-5.447-2.724A1 1 0 013 16.382V5.618a1 1 0 011.447-.894L9 7m0 13l6-3m-6 3V7m6 10l4.553 2.276A1 1 0 0021 18.382V7.618a1 1 0 00-.553-.894L15 4m0 13V4m0 0L9 7"></path>
+                        </svg>
+                    </div>
+                    <div class="max-w-md mx-auto space-y-1.5">
+                        <h3 class="text-base font-bold text-white">Awaiting Remote Sensing Query</h3>
+                        <p class="text-xs text-slate-400 leading-relaxed">
+                            Upload your satellite imagery (Single Image, Bi-Temporal pair, or Optical+SAR) and submit your natural language query to begin analysis.
+                        </p>
+                    </div>
+                </div>
+            </div>
+        </div>
+
+    </div>
+
+</div>
+{% endblock %}

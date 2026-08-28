@@ -1,0 +1,20 @@
+<!-- Error Alert Partial for TENALI AI -->
+<div class="bg-red-950/80 border border-red-800 rounded-2xl p-6 shadow-xl space-y-3 animate-fade-in">
+    <div class="flex items-start gap-3">
+        <div class="w-8 h-8 rounded-lg bg-red-900/80 border border-red-700 flex items-center justify-center text-red-400 shrink-0">
+            <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 9v2m0 4h.01m-6.938 4h13.856c1.54 0 2.502-1.667 1.732-3L13.732 4c-.77-1.333-2.694-1.333-3.464 0L3.34 16c-.77 1.333.192 3 1.732 3z"></path>
+            </svg>
+        </div>
+        <div class="space-y-1">
+            <h3 class="text-sm font-bold text-red-200 uppercase tracking-wide">Analysis Validation Notice</h3>
+            <p class="text-sm text-red-300 leading-relaxed font-medium">
+                {{ error_message }}
+            </p>
+        </div>
+    </div>
+    <div class="pt-2 border-t border-red-900/60 text-xs text-red-400 flex items-center justify-between">
+        <span>Please verify input images and configuration mode.</span>
+        <button onclick="this.closest('.bg-red-950\\/80').remove()" class="text-xs text-red-300 hover:text-white underline">Dismiss</button>
+    </div>
+</div>

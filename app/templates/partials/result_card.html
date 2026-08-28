@@ -1,0 +1,494 @@
+<!-- Dynamic Result Card Partial for TENALI AI -->
+<div class="space-y-5 animate-fade-in">
+
+    <!-- 1. Grounded Answer Card -->
+    <div class="bg-space-900 border border-space-800 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+        <div class="flex flex-wrap items-center justify-between gap-2 border-b border-space-800 pb-3 mb-4">
+            <div class="flex items-center gap-2">
+                <span class="px-2.5 py-1 rounded-md bg-cyan-950 border border-cyan-800 text-cyan-400 text-xs font-mono font-bold uppercase">
+                    {{ result.task }}
+                </span>
+                <span class="px-2.5 py-1 rounded-md bg-slate-800 border border-slate-700 text-slate-300 text-xs font-mono">
+                    {{ result.execution_mode }}
+                </span>
+            </div>
+            <div class="flex items-center gap-2">
+                <span class="text-xs text-slate-400">Confidence Estimate:</span>
+                <span class="px-2.5 py-1 rounded-md bg-emerald-950 border border-emerald-800 text-emerald-400 text-xs font-bold font-mono">
+                    {{ "%.2f"|format(result.confidence_estimate) }} ({{ result.confidence_level }})
+                </span>
+            </div>
+        </div>
+
+        <h3 class="text-xs font-bold uppercase tracking-wider text-cyan-400 mb-1.5">Synthesized Grounded Answer</h3>
+        <p class="text-base sm:text-lg text-white font-medium leading-relaxed">
+            {{ result.answer }}
+        </p>
+
+        <p class="text-[11px] text-slate-500 italic mt-3 pt-3 border-t border-space-800">
+            <strong>Technical Note:</strong> {{ result.disclaimer }}
+        </p>
+    </div>
+
+    <!-- 2. Interactive Visual Evidence Viewer & Layer Inspector -->
+    <div id="viewer-container-{{ result.report_id }}" class="bg-space-900 border border-space-800 rounded-2xl p-5 shadow-xl space-y-4 evidence-viewer-container">
+        
+        {# Compute preferred default active layer #}
+        {% if result.evidence.change_map_url %}
+            {% set default_img = result.evidence.change_map_url %}
+            {% set default_title = "Change Heatmap (Differential Analysis)" %}
+            {% set default_desc = "Radiometric differential intensity with bounding boxes around detected change clusters" %}
+            {% set default_key = "change_map" %}
+        {% elif result.evidence.annotated_image_url %}
+            {% set default_img = result.evidence.annotated_image_url %}
+            {% set default_title = "Grounded Target Detections" %}
+            {% set default_desc = "Semi-transparent spectral mask overlay and localized bounding boxes" %}
+            {% set default_key = "annotated" %}
+        {% elif result.evidence.fused_url %}
+            {% set default_img = result.evidence.fused_url %}
+            {% set default_title = "Cross-Modal Fused Thematic Map" %}
+            {% set default_desc = "Synergistic classification combining Optical reflectance and SAR radar backscatter" %}
+            {% set default_key = "fused" %}
+        {% elif result.evidence.composite_url %}
+            {% set default_img = result.evidence.composite_url %}
+            {% set default_title = "Side-by-Side Tri-View Composite" %}
+            {% set default_desc = "T1 Baseline | T2 Target | Change Heatmap" %}
+            {% set default_key = "composite" %}
+        {% else %}
+            {% set default_img = result.evidence.primary_image_url or result.evidence.optical_url or '' %}
+            {% set default_title = "Primary Satellite Scene" %}
+            {% set default_desc = "Normalized 8-bit true-color raster representation" %}
+            {% set default_key = "primary" %}
+        {% endif %}
+
+        <!-- Header: Title & View Mode Toggle -->
+        <div class="flex flex-wrap items-center justify-between gap-3 border-b border-space-800 pb-3">
+            <div>
+                <h4 class="text-sm font-bold text-white flex items-center gap-2">
+                    <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"></path><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"></path></svg>
+                    <span>Multi-Layer Visual Evidence</span>
+                </h4>
+                <p class="text-[11px] text-slate-400">High-resolution layer inspection, spatial telemetry, and comparative analysis</p>
+            </div>
+
+            <!-- View Mode Switcher -->
+            <div class="flex items-center gap-1 bg-space-950 p-1 rounded-xl border border-space-800">
+                <button type="button" class="viewer-mode-focus text-xs px-3 py-1 rounded-lg bg-cyan-600 text-white font-bold transition flex items-center gap-1.5 shadow">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z"></path></svg>
+                    <span>Focused View</span>
+                </button>
+                <button type="button" class="viewer-mode-grid text-xs px-3 py-1 rounded-lg bg-slate-800 text-slate-300 font-bold transition hover:text-white flex items-center gap-1.5">
+                    <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2V6zM14 6a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2V6zM4 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2H6a2 2 0 01-2-2v-2zM14 16a2 2 0 012-2h2a2 2 0 012 2v2a2 2 0 01-2 2h-2a2 2 0 01-2-2v-2z"></path></svg>
+                    <span>Multi-Layer Grid</span>
+                </button>
+            </div>
+        </div>
+
+        <!-- Layer Selector Tab Bar -->
+        <div class="flex flex-wrap items-center gap-2 pt-1">
+            <span class="text-[11px] font-bold text-slate-400 uppercase mr-1">Evidence Layers:</span>
+
+            {% if result.evidence.change_map_url %}
+            <button type="button" 
+                    class="layer-tab-btn {% if default_key == 'change_map' %}active{% endif %}"
+                    data-layer-key="change_map"
+                    data-url="{{ result.evidence.change_map_url }}"
+                    data-layer-name="Change Heatmap (Differential Analysis)"
+                    data-desc="Radiometric differential intensity with bounding boxes around detected change clusters">
+                <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                <span>Change Heatmap</span>
+            </button>
+            {% endif %}
+
+            {% if result.evidence.primary_image_url %}
+            <button type="button" 
+                    class="layer-tab-btn {% if default_key == 'primary' %}active{% endif %}"
+                    data-layer-key="primary"
+                    data-url="{{ result.evidence.primary_image_url }}"
+                    data-layer-name="{% if result.inputs.get('mode') == 'bi_temporal' %}Time 1 Baseline (T1 Before){% else %}Primary Image{% endif %}"
+                    data-desc="{% if result.inputs.get('mode') == 'bi_temporal' %}Pre-event baseline imagery{% else %}Normalized optical raster{% endif %}">
+                <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+                <span>{% if result.inputs.get('mode') == 'bi_temporal' %}T1 (Before){% else %}Original Image{% endif %}</span>
+            </button>
+            {% endif %}
+
+            {% if result.evidence.secondary_image_url %}
+            <button type="button" 
+                    class="layer-tab-btn"
+                    data-layer-key="secondary"
+                    data-url="{{ result.evidence.secondary_image_url }}"
+                    data-layer-name="Time 2 Target (T2 After)"
+                    data-desc="Post-event target imagery for change comparison">
+                <span class="w-2 h-2 rounded-full bg-teal-400"></span>
+                <span>T2 (After)</span>
+            </button>
+            {% endif %}
+
+            {% set comp_url = result.evidence.composite_url or result.evidence.layers.get('composite') %}
+            {% if comp_url %}
+            <button type="button" 
+                    class="layer-tab-btn {% if default_key == 'composite' %}active{% endif %}"
+                    data-layer-key="composite"
+                    data-url="{{ comp_url }}"
+                    data-layer-name="Side-by-Side Tri-View Composite"
+                    data-desc="Complete panel collage: [ T1 Before | T2 After | Change Heatmap ]">
+                <span class="w-2 h-2 rounded-full bg-indigo-400"></span>
+                <span>Tri-View Composite</span>
+            </button>
+            {% endif %}
+
+            {% if result.evidence.annotated_image_url %}
+            <button type="button" 
+                    class="layer-tab-btn {% if default_key == 'annotated' %}active{% endif %}"
+                    data-layer-key="annotated"
+                    data-url="{{ result.evidence.annotated_image_url }}"
+                    data-layer-name="Grounded Target Detections"
+                    data-desc="Semi-transparent spectral mask overlay and localized bounding boxes">
+                <span class="w-2 h-2 rounded-full bg-cyan-400"></span>
+                <span>Grounded Annotations</span>
+            </button>
+            {% endif %}
+
+            {% set mask_url = result.evidence.mask_image_url or result.evidence.layers.get('mask') %}
+            {% if mask_url %}
+            <button type="button" 
+                    class="layer-tab-btn"
+                    data-layer-key="mask"
+                    data-url="{{ mask_url }}"
+                    data-layer-name="Isolated Binary Target Mask"
+                    data-desc="Discrete binary segmentation mask isolating candidate target pixels">
+                <span class="w-2 h-2 rounded-full bg-purple-400"></span>
+                <span>Binary Mask</span>
+            </button>
+            {% endif %}
+
+            {% if result.evidence.fused_url %}
+            <button type="button" 
+                    class="layer-tab-btn {% if default_key == 'fused' %}active{% endif %}"
+                    data-layer-key="fused"
+                    data-url="{{ result.evidence.fused_url }}"
+                    data-layer-name="Cross-Modal Fused Thematic Map"
+                    data-desc="Synergistic classification combining Optical reflectance and SAR radar backscatter">
+                <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                <span>Fused Thematic Map</span>
+            </button>
+            {% endif %}
+
+            {% if result.evidence.optical_url and result.evidence.optical_url != result.evidence.primary_image_url %}
+            <button type="button" 
+                    class="layer-tab-btn"
+                    data-layer-key="optical"
+                    data-url="{{ result.evidence.optical_url }}"
+                    data-layer-name="Optical Visible Sensor"
+                    data-desc="Optical multi-spectral reflectance imagery">
+                <span class="w-2 h-2 rounded-full bg-blue-400"></span>
+                <span>Optical Sensor</span>
+            </button>
+            {% endif %}
+
+            {% if result.evidence.sar_url and result.evidence.sar_url != result.evidence.secondary_image_url %}
+            <button type="button" 
+                    class="layer-tab-btn"
+                    data-layer-key="sar"
+                    data-url="{{ result.evidence.sar_url }}"
+                    data-layer-name="SAR Radar Backscatter"
+                    data-desc="Synthetic Aperture Radar backscatter intensity">
+                <span class="w-2 h-2 rounded-full bg-amber-400"></span>
+                <span>SAR Sensor</span>
+            </button>
+            {% endif %}
+
+            {% set collage_url = result.evidence.collage_url or result.evidence.layers.get('collage') %}
+            {% if collage_url %}
+            <button type="button" 
+                    class="layer-tab-btn"
+                    data-layer-key="collage"
+                    data-url="{{ collage_url }}"
+                    data-layer-name="Cross-Modal Comparison Collage"
+                    data-desc="Tri-panel comparison: [ Optical | SAR | Fused Thematic Map ]">
+                <span class="w-2 h-2 rounded-full bg-pink-400"></span>
+                <span>Cross-Modal Collage</span>
+            </button>
+            {% endif %}
+        </div>
+
+        <!-- 1. Focused View Mode Container -->
+        <div class="viewer-stage-wrapper space-y-2">
+            <!-- Active Layer Sub-header -->
+            <div class="flex items-center justify-between px-1 py-1 text-xs">
+                <div class="flex items-center gap-2">
+                    <span class="px-2 py-0.5 rounded bg-space-950 border border-space-800 text-cyan-400 font-mono font-bold text-[11px]">ACTIVE LAYER</span>
+                    <strong class="viewer-active-layer-title text-slate-100 font-semibold">{{ default_title }}</strong>
+                </div>
+                <div class="flex items-center gap-2">
+                    <a href="{{ default_img }}" target="_blank" class="viewer-open-newtab text-slate-400 hover:text-cyan-300 text-[11px] font-medium flex items-center gap-1 transition">
+                        <svg class="w-3.5 h-3.5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M10 6H6a2 2 0 00-2 2v10a2 2 0 002 2h10a2 2 0 002-2v-4M14 4h6m0 0v6m0-6L10 14"></path></svg>
+                        <span>Open High-Res</span>
+                    </a>
+                </div>
+            </div>
+
+            <!-- Single Image Interactive Inspection Viewport -->
+            <div class="evidence-stage border border-space-800 rounded-xl relative shadow-inner">
+                <img src="{{ default_img }}" 
+                     alt="Satellite Evidence Layer" 
+                     class="viewer-main-image viewer-image-display" />
+
+                <!-- Bottom Right Zoom / Pan Toolbar -->
+                <div class="absolute bottom-3 right-3 flex items-center gap-1.5 bg-space-900/90 backdrop-blur border border-space-800 px-2 py-1 rounded-xl shadow-lg z-30">
+                    <button type="button" class="viewer-zoom-out w-7 h-7 bg-space-800 hover:bg-cyan-900 text-white rounded-lg flex items-center justify-center text-xs font-bold transition" title="Zoom Out">&minus;</button>
+                    <span class="viewer-zoom-indicator text-xs font-mono font-bold text-cyan-400 px-1 min-w-[42px] text-center">100%</span>
+                    <button type="button" class="viewer-zoom-in w-7 h-7 bg-space-800 hover:bg-cyan-900 text-white rounded-lg flex items-center justify-center text-xs font-bold transition" title="Zoom In">+</button>
+                    <button type="button" class="viewer-zoom-reset px-2.5 h-7 bg-space-800 hover:bg-cyan-900 text-slate-300 hover:text-white rounded-lg text-xs font-mono transition" title="Reset Zoom">Reset</button>
+                </div>
+
+                <!-- Bottom Left Helper Note -->
+                <div class="absolute bottom-3 left-3 bg-space-950/80 backdrop-blur px-2.5 py-1 rounded-lg border border-space-800 text-[10px] font-mono text-slate-400 hidden sm:block">
+                    <span class="text-cyan-400">&bull;</span> Click layer tabs above &bull; Zoom & pan to inspect fine features
+                </div>
+            </div>
+
+            <p class="viewer-active-layer-desc text-[11px] text-slate-400 italic px-1">
+                {{ default_desc }}
+            </p>
+        </div>
+
+        <!-- 2. Side-by-Side Multi-Layer Grid View (Toggled via Grid button) -->
+        <div class="evidence-grid-view hidden space-y-3">
+            <div class="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-3">
+                
+                {% if result.evidence.change_map_url %}
+                <div class="evidence-grid-card p-3 space-y-2 flex flex-col justify-between">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-amber-400">Change Heatmap</span>
+                        <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-amber-950 text-amber-300 border border-amber-800">Clusters</span>
+                    </div>
+                    <div class="w-full h-48 rounded-lg bg-space-950 overflow-hidden flex items-center justify-center border border-space-800">
+                        <img src="{{ result.evidence.change_map_url }}" alt="Change Heatmap" class="max-h-full max-w-full object-contain" />
+                    </div>
+                    <div class="flex justify-between items-center pt-1">
+                        <button type="button" class="grid-card-select-btn text-xs font-semibold text-cyan-400 hover:underline" data-layer-key="change_map">Focus This Layer &rarr;</button>
+                        <a href="{{ result.evidence.change_map_url }}" target="_blank" class="text-[11px] text-slate-400 hover:text-white">Full View</a>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if result.evidence.primary_image_url %}
+                <div class="evidence-grid-card p-3 space-y-2 flex flex-col justify-between">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-cyan-300">{% if result.inputs.get('mode') == 'bi_temporal' %}T1 (Before){% else %}Primary Image{% endif %}</span>
+                        <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-cyan-950 text-cyan-400 border border-cyan-800">Baseline</span>
+                    </div>
+                    <div class="w-full h-48 rounded-lg bg-space-950 overflow-hidden flex items-center justify-center border border-space-800">
+                        <img src="{{ result.evidence.primary_image_url }}" alt="T1 / Primary" class="max-h-full max-w-full object-contain" />
+                    </div>
+                    <div class="flex justify-between items-center pt-1">
+                        <button type="button" class="grid-card-select-btn text-xs font-semibold text-cyan-400 hover:underline" data-layer-key="primary">Focus This Layer &rarr;</button>
+                        <a href="{{ result.evidence.primary_image_url }}" target="_blank" class="text-[11px] text-slate-400 hover:text-white">Full View</a>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if result.evidence.secondary_image_url %}
+                <div class="evidence-grid-card p-3 space-y-2 flex flex-col justify-between">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-teal-300">T2 (After)</span>
+                        <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-teal-950 text-teal-400 border border-teal-800">Target</span>
+                    </div>
+                    <div class="w-full h-48 rounded-lg bg-space-950 overflow-hidden flex items-center justify-center border border-space-800">
+                        <img src="{{ result.evidence.secondary_image_url }}" alt="T2 Target" class="max-h-full max-w-full object-contain" />
+                    </div>
+                    <div class="flex justify-between items-center pt-1">
+                        <button type="button" class="grid-card-select-btn text-xs font-semibold text-cyan-400 hover:underline" data-layer-key="secondary">Focus This Layer &rarr;</button>
+                        <a href="{{ result.evidence.secondary_image_url }}" target="_blank" class="text-[11px] text-slate-400 hover:text-white">Full View</a>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if comp_url %}
+                <div class="evidence-grid-card p-3 space-y-2 flex flex-col justify-between">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-indigo-300">Tri-View Composite</span>
+                        <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-indigo-950 text-indigo-400 border border-indigo-800">Collage</span>
+                    </div>
+                    <div class="w-full h-48 rounded-lg bg-space-950 overflow-hidden flex items-center justify-center border border-space-800">
+                        <img src="{{ comp_url }}" alt="Tri-View Composite" class="max-h-full max-w-full object-contain" />
+                    </div>
+                    <div class="flex justify-between items-center pt-1">
+                        <button type="button" class="grid-card-select-btn text-xs font-semibold text-cyan-400 hover:underline" data-layer-key="composite">Focus This Layer &rarr;</button>
+                        <a href="{{ comp_url }}" target="_blank" class="text-[11px] text-slate-400 hover:text-white">Full View</a>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if result.evidence.annotated_image_url %}
+                <div class="evidence-grid-card p-3 space-y-2 flex flex-col justify-between">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-cyan-300">Grounded Overlay</span>
+                        <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-cyan-950 text-cyan-400 border border-cyan-800">Annotation</span>
+                    </div>
+                    <div class="w-full h-48 rounded-lg bg-space-950 overflow-hidden flex items-center justify-center border border-space-800">
+                        <img src="{{ result.evidence.annotated_image_url }}" alt="Grounded Overlay" class="max-h-full max-w-full object-contain" />
+                    </div>
+                    <div class="flex justify-between items-center pt-1">
+                        <button type="button" class="grid-card-select-btn text-xs font-semibold text-cyan-400 hover:underline" data-layer-key="annotated">Focus This Layer &rarr;</button>
+                        <a href="{{ result.evidence.annotated_image_url }}" target="_blank" class="text-[11px] text-slate-400 hover:text-white">Full View</a>
+                    </div>
+                </div>
+                {% endif %}
+
+                {% if result.evidence.fused_url %}
+                <div class="evidence-grid-card p-3 space-y-2 flex flex-col justify-between">
+                    <div class="flex items-center justify-between">
+                        <span class="text-xs font-bold text-emerald-300">Fused Thematic</span>
+                        <span class="text-[10px] font-mono px-1.5 py-0.5 rounded bg-emerald-950 text-emerald-400 border border-emerald-800">Fusion</span>
+                    </div>
+                    <div class="w-full h-48 rounded-lg bg-space-950 overflow-hidden flex items-center justify-center border border-space-800">
+                        <img src="{{ result.evidence.fused_url }}" alt="Fused Thematic Map" class="max-h-full max-w-full object-contain" />
+                    </div>
+                    <div class="flex justify-between items-center pt-1">
+                        <button type="button" class="grid-card-select-btn text-xs font-semibold text-cyan-400 hover:underline" data-layer-key="fused">Focus This Layer &rarr;</button>
+                        <a href="{{ result.evidence.fused_url }}" target="_blank" class="text-[11px] text-slate-400 hover:text-white">Full View</a>
+                    </div>
+                </div>
+                {% endif %}
+
+            </div>
+        </div>
+
+    </div>
+
+    <!-- 3. Quantitative Telemetry & Geospatial Metadata Panel -->
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <!-- Telemetry / Statistics -->
+        <div class="bg-space-900 border border-space-800 rounded-2xl p-4 shadow-lg space-y-3">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-cyan-400">Quantitative Analysis Metrics</h4>
+            
+            {% if result.evidence.statistics %}
+            <div class="space-y-2 text-xs">
+                {% if result.evidence.statistics.changed_percent is defined %}
+                <div class="flex justify-between py-1 border-b border-space-800">
+                    <span class="text-slate-400">Changed Area Coverage:</span>
+                    <strong class="text-white font-mono">{{ result.evidence.statistics.changed_percent }}%</strong>
+                </div>
+                <div class="flex justify-between py-1 border-b border-space-800">
+                    <span class="text-slate-400">Change Trend:</span>
+                    <strong class="text-cyan-300 font-mono uppercase">{{ result.evidence.statistics.trend }}</strong>
+                </div>
+                {% if result.evidence.statistics.approx_changed_area_ha %}
+                <div class="flex justify-between py-1 border-b border-space-800">
+                    <span class="text-slate-400">Approx. Changed Area:</span>
+                    <strong class="text-emerald-400 font-mono">{{ result.evidence.statistics.approx_changed_area_ha }} ha</strong>
+                </div>
+                {% endif %}
+                {% elif result.evidence.statistics.fused_water_coverage_pct is defined %}
+                <div class="flex justify-between py-1 border-b border-space-800">
+                    <span class="text-slate-400">Fused Water Bodies:</span>
+                    <strong class="text-blue-400 font-mono">{{ result.evidence.statistics.fused_water_coverage_pct }}%</strong>
+                </div>
+                <div class="flex justify-between py-1 border-b border-space-800">
+                    <span class="text-slate-400">Fused Built-up Infrastructure:</span>
+                    <strong class="text-amber-400 font-mono">{{ result.evidence.statistics.fused_builtup_coverage_pct }}%</strong>
+                </div>
+                <div class="flex justify-between py-1 border-b border-space-800">
+                    <span class="text-slate-400">Fused Vegetation Cover:</span>
+                    <strong class="text-emerald-400 font-mono">{{ result.evidence.statistics.fused_vegetation_coverage_pct }}%</strong>
+                </div>
+                {% endif %}
+            </div>
+            {% else %}
+            <p class="text-xs text-slate-400 italic">No discrete change statistics generated for this task type.</p>
+            {% endif %}
+
+            <!-- Bounding Box Clusters -->
+            {% if result.evidence.regions and result.evidence.regions|length > 0 %}
+            <div class="pt-2">
+                <p class="text-[11px] font-bold text-slate-400 uppercase mb-1.5">Detected Region Clusters ({{ result.evidence.regions|length }}):</p>
+                <div class="max-h-24 overflow-y-auto space-y-1 text-[11px] font-mono">
+                    {% for r in result.evidence.regions[:5] %}
+                    <div class="cluster-jump-btn px-2.5 py-1.5 rounded-lg bg-space-950 border border-space-800 hover:border-cyan-500/60 hover:bg-space-900 cursor-pointer flex justify-between items-center transition" title="Click to view change heatmap cluster">
+                        <span class="text-cyan-300 font-bold">#{{ r.box_id }} {{ r.label }}</span>
+                        <span class="text-slate-400">{{ r.area_pixels }} px (conf: {{ r.confidence_estimate }}) &rarr;</span>
+                    </div>
+                    {% endfor %}
+                </div>
+            </div>
+            {% endif %}
+        </div>
+
+        <!-- Raster Geospatial Metadata -->
+        <div class="bg-space-900 border border-space-800 rounded-2xl p-4 shadow-lg space-y-3">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-cyan-400">Raster & Spatial Metadata</h4>
+            {% set primary_meta = result.metadata.get('primary', {}) %}
+            <div class="space-y-1.5 text-xs">
+                <div class="flex justify-between py-1 border-b border-space-800">
+                    <span class="text-slate-400">File Name:</span>
+                    <span class="text-white font-mono truncate max-w-[180px]">{{ primary_meta.get('filename', 'Unknown') }}</span>
+                </div>
+                <div class="flex justify-between py-1 border-b border-space-800">
+                    <span class="text-slate-400">Raster Dimensions:</span>
+                    <span class="text-white font-mono">{{ primary_meta.get('width', 0) }} &times; {{ primary_meta.get('height', 0) }} px ({{ primary_meta.get('bands', 1) }} bands)</span>
+                </div>
+                <div class="flex justify-between py-1 border-b border-space-800">
+                    <span class="text-slate-400">Coordinate Reference System:</span>
+                    <span class="text-cyan-300 font-mono text-[11px]">{{ primary_meta.get('crs') or 'Local / Unprojected' }}</span>
+                </div>
+                <div class="flex justify-between py-1 border-b border-space-800">
+                    <span class="text-slate-400">Pixel Resolution:</span>
+                    <span class="text-white font-mono">{{ primary_meta.get('resolution') or 'Relative' }}</span>
+                </div>
+            </div>
+        </div>
+    </div>
+
+    <!-- 4. Auditable Execution Trace Timeline -->
+    <div class="bg-space-900 border border-space-800 rounded-2xl p-5 shadow-lg space-y-3">
+        <div class="flex items-center justify-between border-b border-space-800 pb-2">
+            <h4 class="text-xs font-bold uppercase tracking-wider text-slate-300 flex items-center gap-2">
+                <svg class="w-4 h-4 text-emerald-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"></path></svg>
+                <span>Auditable Execution Trace</span>
+            </h4>
+            <span class="text-[11px] font-mono text-cyan-400 font-bold">Total: {{ "%.1f"|format(result.execution_trace|sum(attribute='duration_ms')) }} ms</span>
+        </div>
+
+        <div class="space-y-2 font-mono text-xs">
+            {% for step in result.execution_trace %}
+            <div class="flex items-center justify-between p-2 rounded-lg bg-space-950/80 border border-space-800/80">
+                <div class="flex items-center gap-2.5">
+                    <span class="w-2 h-2 rounded-full bg-emerald-400"></span>
+                    <span class="text-slate-200 font-semibold">{{ step.step }}</span>
+                    {% if step.tool %}
+                    <span class="text-[10px] px-1.5 py-0.5 rounded bg-cyan-950 text-cyan-400 border border-cyan-800">{{ step.tool }}</span>
+                    {% endif %}
+                </div>
+                <div class="flex items-center gap-3 text-slate-400">
+                    <span class="text-[11px] text-slate-400 truncate max-w-[140px]">{{ step.implementation or '' }}</span>
+                    <span class="text-cyan-400 text-[11px] font-bold">{{ "%.1f"|format(step.duration_ms) }}ms</span>
+                </div>
+            </div>
+            {% endfor %}
+        </div>
+    </div>
+
+    <!-- 5. Report Download & Export Actions -->
+    <div class="flex flex-wrap items-center justify-between gap-3 pt-2">
+        <a href="/reports/{{ result.report_id }}" target="_blank"
+           class="px-4 py-2 bg-space-800 hover:bg-space-700 text-white text-xs font-bold rounded-xl border border-slate-700 shadow transition flex items-center gap-2">
+            <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"></path></svg>
+            <span>View Printable Audit Report</span>
+        </a>
+
+        <a href="/reports/{{ result.report_id }}/json" download="tenali_report_{{ result.report_id }}.json"
+           class="px-4 py-2 bg-space-900 hover:bg-space-800 text-cyan-300 text-xs font-mono rounded-xl border border-cyan-800/80 transition flex items-center gap-2">
+            <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4"></path></svg>
+            <span>Export JSON Telemetry</span>
+        </a>
+    </div>
+
+</div>
+
+<script>
+  if (window.initEvidenceViewer) {
+    window.initEvidenceViewer("viewer-container-{{ result.report_id }}");
+  }
+</script>

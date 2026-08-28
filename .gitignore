@@ -1,0 +1,27 @@
+# Python
+__pycache__/
+*.py[cod]
+*$py.class
+.venv/
+env/
+venv/
+*.egg-info/
+dist/
+build/
+
+# Environment
+.env
+
+# Generated Evidence & Uploads
+generated/uploads/*
+!generated/uploads/.gitkeep
+generated/evidence/*
+!generated/evidence/.gitkeep
+generated/reports/*
+!generated/reports/.gitkeep
+
+# IDE / System
+.vscode/
+.idea/
+.DS_Store
+Thumbs.db
