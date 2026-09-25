@@ -165,3 +165,103 @@ body {
 .animate-fade-in {
   animation: fadeIn 0.25s cubic-bezier(0.16, 1, 0.3, 1) forwards;
 }
+
+/* MapLibre GL Controls - Dark Theme */
+.maplibregl-ctrl-group {
+  background-color: #0e1526 !important;
+  border: 1px solid #1e293b !important;
+  border-radius: 0.5rem !important;
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.5) !important;
+}
+
+.maplibregl-ctrl-group button {
+  background-color: transparent !important;
+  border: none !important;
+  width: 32px !important;
+  height: 32px !important;
+  display: flex !important;
+  align-items: center !important;
+  justify-content: center !important;
+  color: #22d3ee !important;
+  transition: all 0.15s ease-in-out !important;
+}
+
+.maplibregl-ctrl-group button:hover {
+  background-color: #131c33 !important;
+  color: #06b6d4 !important;
+}
+
+.maplibregl-ctrl-group button + button {
+  border-top: 1px solid #1e293b !important;
+}
+
+.maplibregl-ctrl-icon {
+  background-repeat: no-repeat !important;
+  background-position: center !important;
+}
+
+/* Navigation Control (+/-) */
+.maplibregl-ctrl-zoom-in .maplibregl-ctrl-icon,
+.maplibregl-ctrl-zoom-out .maplibregl-ctrl-icon {
+  background-image: none !important;
+}
+
+.maplibregl-ctrl-zoom-in::after {
+  content: '+' !important;
+  font-size: 20px !important;
+  font-weight: 600 !important;
+  color: #22d3ee !important;
+  line-height: 1 !important;
+}
+
+.maplibregl-ctrl-zoom-out::after {
+  content: '−' !important;
+  font-size: 20px !important;
+  font-weight: 600 !important;
+  color: #22d3ee !important;
+  line-height: 1 !important;
+}
+
+/* Compass Control */
+.maplibregl-ctrl-compass .maplibregl-ctrl-icon {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 29 29' fill='%2322d3ee'%3E%3Cpath d='M14.5 3.5l-5 10 5-2.5 5 2.5-5-10z'/%3E%3Cpath d='M14.5 25.5l5-10-5 2.5-5-2.5 5 10z' fill='%2394a3b8'/%3E%3C/svg%3E") !important;
+}
+
+/* Fullscreen Control */
+.maplibregl-ctrl-fullscreen .maplibregl-ctrl-icon {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 29 29' fill='none' stroke='%2322d3ee' stroke-width='2'%3E%3Cpath d='M5 10V5h5M24 10V5h-5M5 19v5h5M24 19v5h-5'/%3E%3C/svg%3E") !important;
+}
+
+.maplibregl-ctrl-shrink .maplibregl-ctrl-icon {
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 29 29' fill='none' stroke='%2322d3ee' stroke-width='2'%3E%3Cpath d='M10 5v5H5M19 5v5h5M10 24v-5H5M19 24v-5h5'/%3E%3C/svg%3E") !important;
+}
+
+/* Custom control buttons with SVG */
+.maplibregl-ctrl-icon svg {
+  color: #22d3ee !important;
+  fill: currentColor !important;
+  stroke: currentColor !important;
+}
+
+.maplibregl-ctrl-group button:hover svg {
+  color: #06b6d4 !important;
+}
+
+/* Attribution */
+.maplibregl-ctrl-attrib {
+  background-color: rgba(14, 21, 38, 0.9) !important;
+  border: 1px solid #1e293b !important;
+  color: #94a3b8 !important;
+  font-size: 10px !important;
+  border-radius: 0.25rem !important;
+  padding: 2px 6px !important;
+}
+
+.maplibregl-ctrl-attrib a {
+  color: #22d3ee !important;
+  text-decoration: none !important;
+}
+
+.maplibregl-ctrl-attrib a:hover {
+  color: #06b6d4 !important;
+}

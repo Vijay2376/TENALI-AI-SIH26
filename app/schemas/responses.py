@@ -22,6 +22,7 @@ class RasterMetadata(BaseModel):
     file_size_kb: float = 0.0
     modality: str = "optical"
     approximate_center: list[float] | None = None
+    footprint_geojson: dict[str, Any] | None = None
 
 
 class RegionBox(BaseModel):
@@ -67,6 +68,7 @@ class VisualEvidence(BaseModel):
     regions: list[RegionBox] = Field(default_factory=list)
     statistics: ChangeStatistics | dict[str, Any] | None = None
     layers: dict[str, str] = Field(default_factory=dict)
+    footprint_geojson: dict[str, Any] | None = None
 
 
 class AnalysisResponse(BaseModel):

@@ -95,6 +95,20 @@ class IntentRouter:
             )
 
         else:  # InputMode.SINGLE
+            # Location/geolocation query detection
+            location_keywords = ["location", "where was", "where is", "coordinates", "geolocation", "find the location", "locate the image"]
+            if any(kw in query_lower for kw in location_keywords):
+                return RoutedIntent(
+                    task_type=TaskType.SINGLE_IMAGE_VQA,
+                    target_entity="image location",
+                    recommended_tools=[
+                        "vqa_tool",
+                        "spatial_analysis_tool",
+                    ],
+                    router_engine="Deterministic Rule Router",
+                    reasoning="Location/geolocation query detected",
+                )
+
             # Grounding detection verbs
             grounding_verbs = ["highlight", "locate", "show", "where", "find", "segment", "box", "detect", "point out"]
             if any(v in query_lower for v in grounding_verbs):

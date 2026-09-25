@@ -487,8 +487,43 @@
 
 </div>
 
+<!-- Embed result data for map integration -->
+<script id="result-data" type="application/json">
+{{ result | tojson }}
+</script>
+
 <script>
-  if (window.initEvidenceViewer) {
-    window.initEvidenceViewer("viewer-container-{{ result.report_id }}");
-  }
+  (function() {
+    // Initialize evidence viewer
+    if (window.initEvidenceViewer) {
+      window.initEvidenceViewer("viewer-container-{{ result.report_id }}");
+    }
+
+    // Notify map of footprint data
+    if (window.tenaliMap) {
+      const resultData = document.getElementById('result-data');
+      if (resultData) {
+        try {
+          const result = JSON.parse(resultData.textContent);
+
+          // Check if footprint GeoJSON exists
+          if (result.evidence && result.evidence.footprint_geojson) {
+            console.log('[ResultCard] Footprint data found, rendering on map');
+            window.tenaliMap.renderFootprint(result.evidence.footprint_geojson);
+            window.tenaliMap.show();
+          }
+
+          // Dispatch event for any listeners
+          document.dispatchEvent(new CustomEvent('analysis-complete', {
+            detail: {
+              footprint: result.evidence?.footprint_geojson,
+              evidence: null // Add spatial evidence GeoJSON here if available
+            }
+          }));
+        } catch (e) {
+          console.error('[ResultCard] Failed to parse result data:', e);
+        }
+      }
+    }
+  })();
 </script>

@@ -182,7 +182,7 @@ async def analyze_remote_sensing_query(
             request=request,
             name="partials/result_card.html",
             context={
-                "result": response,
+                "result": response.model_dump(),
             },
         )
 

@@ -9,6 +9,44 @@ from PIL import Image
 from app.schemas.responses import RasterMetadata
 
 
+def generate_footprint_geojson(bounds: list[float], crs: str | None) -> dict | None:
+    """Generate GeoJSON footprint polygon from bounds.
+
+    Args:
+        bounds: [min_x, min_y, max_x, max_y]
+        crs: Coordinate reference system string
+
+    Returns:
+        GeoJSON Feature with Polygon geometry, or None if bounds invalid
+    """
+    if not bounds or len(bounds) != 4:
+        return None
+
+    min_x, min_y, max_x, max_y = bounds
+
+    # Create polygon coordinates (exterior ring, counter-clockwise)
+    coordinates = [[
+        [min_x, min_y],  # southwest
+        [max_x, min_y],  # southeast
+        [max_x, max_y],  # northeast
+        [min_x, max_y],  # northwest
+        [min_x, min_y]   # close the ring
+    ]]
+
+    return {
+        "type": "Feature",
+        "geometry": {
+            "type": "Polygon",
+            "coordinates": coordinates
+        },
+        "properties": {
+            "type": "image_footprint",
+            "crs": crs or "unknown",
+            "bounds": bounds
+        }
+    }
+
+
 def extract_raster_metadata(file_path: Path | str) -> RasterMetadata:
     """Extract metadata from GeoTIFF, TIFF, PNG, or JPEG remote sensing image."""
     path = Path(file_path)
@@ -86,8 +124,12 @@ def extract_raster_metadata(file_path: Path | str) -> RasterMetadata:
         modality = "optical"
 
     center = None
+    footprint_geojson = None
+
     if bounds:
         center = [round((bounds[1] + bounds[3]) / 2.0, 5), round((bounds[0] + bounds[2]) / 2.0, 5)]
+        # Generate footprint GeoJSON polygon
+        footprint_geojson = generate_footprint_geojson(bounds, crs)
 
     return RasterMetadata(
         filename=path.name,
@@ -102,4 +144,5 @@ def extract_raster_metadata(file_path: Path | str) -> RasterMetadata:
         file_size_kb=file_size_kb,
         modality=modality,
         approximate_center=center,
+        footprint_geojson=footprint_geojson,
     )

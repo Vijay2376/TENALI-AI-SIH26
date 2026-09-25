@@ -235,3 +235,20 @@ function setupExampleChips() {
     });
   });
 }
+
+// AOI (Area of Interest) handling
+let currentAOI = null;
+
+document.addEventListener('aoi-changed', (e) => {
+  currentAOI = e.detail.hasAOI ? e.detail.geojson : null;
+  console.log('[App] AOI changed:', currentAOI ? 'AOI selected' : 'AOI cleared');
+
+  // Could add visual indicator that AOI is selected
+  // Could enable a special "Analyze Selected Area" button
+  // For now, AOI is just stored for potential future use
+});
+
+// Export for map to access if needed
+window.getCurrentAOI = function() {
+  return currentAOI;
+};

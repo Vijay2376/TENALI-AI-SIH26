@@ -3,26 +3,23 @@
 {% block content %}
 <div class="space-y-6">
 
-    <!-- Top Hero Banner / Quick Intro -->
-    <div class="bg-gradient-to-r from-space-900 via-space-850 to-space-900 border border-space-800 rounded-2xl p-6 shadow-xl relative overflow-hidden eo-grid-pattern">
-        <div class="relative z-10 max-w-3xl">
-            <span class="px-2.5 py-0.5 rounded-full bg-cyan-950 border border-cyan-800 text-cyan-400 text-xs font-semibold uppercase tracking-wider">
-                Agentic Earth Observation Intelligence
-            </span>
-            <h1 class="text-2xl sm:text-3xl font-extrabold text-white mt-2 tracking-tight">
-                Query-Driven Multimodal Remote Sensing Analysis
+    <!-- Top Hero Banner -->
+    <div class="bg-gradient-to-r from-space-900 via-space-850 to-space-900 border border-space-800 rounded-2xl p-6 shadow-xl relative overflow-hidden">
+        <div class="relative z-10">
+            <h1 class="text-3xl sm:text-4xl font-extrabold text-white tracking-tight">
+                <span class="text-cyan-400">TENALI</span> AI
             </h1>
-            <p class="text-sm text-slate-300 mt-2 leading-relaxed">
-                TENALI AI dynamically orchestrates specialist remote-sensing models and image processing pipelines to answer natural language questions over satellite imagery with verifiable visual evidence.
+            <p class="text-base text-slate-300 mt-2">
+                Ask the Earth. Understand the Change.
             </p>
         </div>
     </div>
 
     <!-- Interactive Analysis Workspace -->
-    <div class="grid grid-cols-1 lg:grid-cols-12 gap-6">
+    <div class="grid grid-cols-1 lg:grid-cols-2 gap-6">
 
-        <!-- Left Column: Input Controls & File Upload (5 cols) -->
-        <div class="lg:col-span-5 space-y-5">
+        <!-- Left Column: Input Controls & File Upload -->
+        <div class="space-y-5">
             <div class="bg-space-900 border border-space-800 rounded-2xl p-5 shadow-lg">
                 <h2 class="text-sm font-bold uppercase tracking-wider text-cyan-400 flex items-center gap-2 mb-4">
                     <svg class="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 16l4.586-4.586a2 2 0 012.828 0L16 16m-2-2l1.586-1.586a2 2 0 012.828 0L20 14m-6-6h.01M6 20h12a2 2 0 002-2V6a2 2 0 00-2-2H6a2 2 0 00-2 2v12a2 2 0 002 2z"></path></svg>
@@ -175,8 +172,34 @@
             </div>
         </div>
 
-        <!-- Right Column: Results & Interactive Visual Evidence Viewer (7 cols) -->
-        <div class="lg:col-span-7">
+        <!-- Right Column: Map & Spatial Context -->
+        <div class="space-y-5">
+            <!-- Spatial Context Map -->
+            <div id="map-section" class="bg-space-900 border border-space-800 rounded-2xl overflow-hidden shadow-xl">
+                <div class="px-5 py-3 border-b border-space-800 flex items-center justify-between">
+                    <div class="flex items-center gap-2">
+                        <svg class="w-4 h-4 text-cyan-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M3.055 11H5a2 2 0 012 2v1a2 2 0 002 2 2 2 0 012 2v2.945M8 3.935V5.5A2.5 2.5 0 0010.5 8h.5a2 2 0 012 2 2 2 0 104 0 2 2 0 012-2h1.064M15 20.488V18a2 2 0 012-2h3.064M21 12a9 9 0 11-18 0 9 9 0 0118 0z"></path>
+                        </svg>
+                        <h3 class="text-sm font-bold uppercase tracking-wider text-cyan-400">Spatial Context</h3>
+                    </div>
+                    <div class="flex items-center gap-3">
+                        <div id="map-info" class="text-xs text-slate-400 font-mono"></div>
+                        <button id="map-reset" class="px-2.5 py-1 rounded-lg bg-space-950 border border-slate-800 hover:border-cyan-500 text-xs text-slate-300 hover:text-cyan-300 transition">
+                            Reset View
+                        </button>
+                    </div>
+                </div>
+                <div id="map-container" class="relative" style="height: 400px;"></div>
+            </div>
+        </div>
+
+    </div>
+
+    <!-- Results Section (Full Width Below) -->
+    <div class="space-y-6">
+        <!-- Results & Interactive Visual Evidence Viewer -->
+        <div>
             <!-- Loading State Indicator -->
             <div id="analysis-loading" class="htmx-indicator bg-space-900 border border-space-800 rounded-2xl p-12 text-center shadow-xl space-y-4">
                 <div class="w-12 h-12 border-4 border-cyan-500/20 border-t-cyan-400 rounded-full animate-spin mx-auto"></div>
@@ -204,7 +227,6 @@
                 </div>
             </div>
         </div>
-
     </div>
 
 </div>

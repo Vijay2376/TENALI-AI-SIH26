@@ -375,40 +375,109 @@ class TenaliOrchestrator:
         else:  # SINGLE_IMAGE_VQA or CAPTIONING
             rgb_arr = rasters[0][1]
 
-            t_tool_start = time.perf_counter()
-            vqa_tool = self.registry.get("vqa_tool")
-            tools_used.append(vqa_tool.name)
-            vqa_res = vqa_tool.execute(rgb_arr=rgb_arr, query=query, metadata=primary_meta)
-            exec_mode = vqa_res.get("execution_mode", ExecutionMode.REAL_EO_ADAPTED.value)
+            # Check if this is a location query
+            query_lower = query.lower()
+            is_location_query = any(kw in query_lower for kw in ["location", "where was", "where is", "coordinates", "geolocation", "find the location"])
 
-            trace.add_step(
-                step="specialist_vqa",
-                tool=vqa_tool.name,
-                implementation=vqa_res.get("adapter", "DemoVQAAdapter"),
-                duration_ms=(time.perf_counter() - t_tool_start) * 1000.0,
-                details={
-                    "top_class": vqa_res["top_class"],
-                    "domain_confidence": vqa_res["confidence_estimate"],
-                    "class_distribution": vqa_res["class_distribution"],
-                },
-            )
+            if is_location_query and intent.target_entity == "image location":
+                # Handle location query - check for geospatial metadata
+                if primary_meta.get("crs") and primary_meta.get("bounds"):
+                    # Image has valid geospatial metadata
+                    crs = primary_meta["crs"]
+                    bounds = primary_meta["bounds"]
+                    center = primary_meta.get("approximate_center", [0, 0])
 
-            # Evidence Generation
-            t_ev_start = time.perf_counter()
-            ev_tool = self.registry.get("evidence_generation_tool")
-            tools_used.append(ev_tool.name)
-            evidence = ev_tool.execute(mode=mode, rgb_primary=rgb_arr)
-            trace.add_step(
-                step="evidence_generation",
-                tool=ev_tool.name,
-                implementation="EvidenceRenderAdapter",
-                duration_ms=(time.perf_counter() - t_ev_start) * 1000.0,
-                details={"artifacts_rendered": ["primary_preview"]},
-            )
+                    trace.add_step(
+                        step="location_extraction",
+                        status=StepStatus.SUCCESS,
+                        duration_ms=5.0,
+                        details={
+                            "crs": crs,
+                            "bounds": bounds,
+                            "center": center,
+                        },
+                    )
 
-            confidence_estimate = float(vqa_res["confidence_estimate"])
-            analysis_context = vqa_res
-            answer = vqa_res["answer"]
+                    answer = (
+                        f"This georeferenced image contains valid spatial metadata. "
+                        f"Coordinate Reference System: {crs}. "
+                        f"Approximate center coordinates: Latitude {center[0]:.5f}, Longitude {center[1]:.5f}. "
+                        f"Bounding box: [{bounds[0]:.5f}, {bounds[1]:.5f}, {bounds[2]:.5f}, {bounds[3]:.5f}]. "
+                        f"The image footprint has been displayed on the map."
+                    )
+                    confidence_estimate = 0.95
+                    exec_mode = ExecutionMode.REAL_EO_ADAPTED.value
+                    analysis_context = {"location": center, "bounds": bounds, "crs": crs}
+                else:
+                    # No geospatial metadata
+                    trace.add_step(
+                        step="location_extraction",
+                        status=StepStatus.WARNING,
+                        duration_ms=2.0,
+                        details={
+                            "message": "No geospatial metadata found",
+                            "file_format": primary_meta.get("format"),
+                        },
+                    )
+
+                    answer = (
+                        f"This image file ({primary_meta.get('filename', 'unknown')}) does not contain sufficient geospatial metadata "
+                        f"to determine its geographic location. The file format ({primary_meta.get('format', 'unknown')}) does not include "
+                        f"coordinate reference system or georeferencing information. To determine location, please upload a georeferenced image "
+                        f"format such as GeoTIFF with embedded CRS and transformation data."
+                    )
+                    confidence_estimate = 0.95
+                    exec_mode = ExecutionMode.IMAGE_PROCESSING.value
+                    analysis_context = {"has_geospatial_metadata": False}
+
+                # Evidence Generation for location query
+                t_ev_start = time.perf_counter()
+                ev_tool = self.registry.get("evidence_generation_tool")
+                tools_used.append(ev_tool.name)
+                evidence = ev_tool.execute(mode=mode, rgb_primary=rgb_arr)
+                trace.add_step(
+                    step="evidence_generation",
+                    tool=ev_tool.name,
+                    implementation="EvidenceRenderAdapter",
+                    duration_ms=(time.perf_counter() - t_ev_start) * 1000.0,
+                    details={"artifacts_rendered": ["primary_preview"]},
+                )
+            else:
+                # Normal VQA
+                t_tool_start = time.perf_counter()
+                vqa_tool = self.registry.get("vqa_tool")
+                tools_used.append(vqa_tool.name)
+                vqa_res = vqa_tool.execute(rgb_arr=rgb_arr, query=query, metadata=primary_meta)
+                exec_mode = vqa_res.get("execution_mode", ExecutionMode.REAL_EO_ADAPTED.value)
+
+                trace.add_step(
+                    step="specialist_vqa",
+                    tool=vqa_tool.name,
+                    implementation=vqa_res.get("adapter", "DemoVQAAdapter"),
+                    duration_ms=(time.perf_counter() - t_tool_start) * 1000.0,
+                    details={
+                        "top_class": vqa_res["top_class"],
+                        "domain_confidence": vqa_res["confidence_estimate"],
+                        "class_distribution": vqa_res["class_distribution"],
+                    },
+                )
+
+                # Evidence Generation
+                t_ev_start = time.perf_counter()
+                ev_tool = self.registry.get("evidence_generation_tool")
+                tools_used.append(ev_tool.name)
+                evidence = ev_tool.execute(mode=mode, rgb_primary=rgb_arr)
+                trace.add_step(
+                    step="evidence_generation",
+                    tool=ev_tool.name,
+                    implementation="EvidenceRenderAdapter",
+                    duration_ms=(time.perf_counter() - t_ev_start) * 1000.0,
+                    details={"artifacts_rendered": ["primary_preview"]},
+                )
+
+                confidence_estimate = float(vqa_res["confidence_estimate"])
+                analysis_context = vqa_res
+                answer = vqa_res["answer"]
 
         # ---------------------------------------------------------------------
         # STAGE 6: ANSWER SYNTHESIS (LLM Polish if active, else grounded answer)
@@ -444,6 +513,10 @@ class TenaliOrchestrator:
             conf_level = "Approximate"
 
         report_id = uuid.uuid4().hex[:12]
+
+        # Add footprint GeoJSON to evidence if available
+        if primary_meta.get("footprint_geojson"):
+            evidence.footprint_geojson = primary_meta["footprint_geojson"]
 
         return AnalysisResponse(
             success=True,
