@@ -412,3 +412,36 @@ body {
   border-color: #22d3ee !important;
   box-shadow: 0 0 0 2px rgba(34, 211, 238, .22) !important;
 }
+
+
+/* Final selector: custom controls are direct children of #map-container. */
+#map-container .maplibregl-ctrl-group .tenali-control-button {
+  appearance: none !important;
+  -webkit-appearance: none !important;
+  background: #0e1526 !important;
+  background-color: #0e1526 !important;
+  background-image: none !important;
+  color: #22d3ee !important;
+  opacity: 1 !important;
+  border: 0 !important;
+}
+
+#map-container .maplibregl-ctrl-group .tenali-control-button svg {
+  color: #22d3ee !important;
+  fill: currentColor !important;
+  stroke: currentColor !important;
+  opacity: 1 !important;
+}
+
+#map-container .maplibregl-ctrl-group .tenali-control-button:hover {
+  background: #162238 !important;
+  background-color: #162238 !important;
+  color: #67e8f9 !important;
+}
+
+#map-container .maplibregl-ctrl-group .tenali-control-button:active,
+#map-container .maplibregl-ctrl-group .tenali-control-button.aoi-active {
+  background: #0891b2 !important;
+  background-color: #0891b2 !important;
+  color: #ffffff !important;
+}
