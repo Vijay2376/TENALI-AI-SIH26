@@ -12,6 +12,7 @@ class TenaliMap {
     this.initialized = false;
     this.currentFootprint = null;
     this.currentAOI = null;
+    this.aoiCapture = null;
     this.isDrawingAOI = false;
     this.aoiStartPoint = null;
 
@@ -44,7 +45,10 @@ class TenaliMap {
         style: this.getSatelliteStyle(),
         center: [78.9629, 20.5937], // Center of India
         zoom: 4,
-        attributionControl: true
+        attributionControl: true,
+        canvasContextAttributes: {
+          preserveDrawingBuffer: true
+        }
       });
 
       // Add fullscreen control
@@ -141,8 +145,8 @@ class TenaliMap {
     const zoomControl = document.createElement('div');
     zoomControl.className = 'maplibregl-ctrl maplibregl-ctrl-group';
     zoomControl.innerHTML = `
-      <button id="map-zoom-in" class="maplibregl-ctrl-icon" title="Zoom In" style="width: 32px; height: 32px; font-size: 20px; font-weight: 600; line-height: 1;">+</button>
-      <button id="map-zoom-out" class="maplibregl-ctrl-icon" title="Zoom Out" style="width: 32px; height: 32px; font-size: 20px; font-weight: 600; line-height: 1;">−</button>
+      <button id="map-zoom-in" class="maplibregl-ctrl-icon tenali-control-button" title="Zoom In" style="width: 32px; height: 32px; font-size: 20px; font-weight: 600; line-height: 1;">+</button>
+      <button id="map-zoom-out" class="maplibregl-ctrl-icon tenali-control-button" title="Zoom Out" style="width: 32px; height: 32px; font-size: 20px; font-weight: 600; line-height: 1;">−</button>
     `;
     this.map.getContainer().appendChild(zoomControl);
     zoomControl.querySelector('#map-zoom-in').addEventListener('click', () => this.map.zoomIn());
@@ -152,7 +156,7 @@ class TenaliMap {
     const basemapControl = document.createElement('div');
     basemapControl.className = 'maplibregl-ctrl maplibregl-ctrl-group';
     basemapControl.innerHTML = `
-      <button id="map-basemap-toggle" class="maplibregl-ctrl-icon" title="Basemap: Satellite + Labels" style="width: 32px; height: 32px;">
+      <button id="map-basemap-toggle" class="maplibregl-ctrl-icon tenali-control-button" title="Basemap: Satellite + Labels" style="width: 32px; height: 32px;">
         <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
           <path d="M10 0L0 6v8l10 6 10-6V6L10 0zm8 12.5l-8 4.8-8-4.8V7.5l8 4.8 8-4.8v5z"/>
         </svg>
@@ -166,7 +170,7 @@ class TenaliMap {
     const resetControl = document.createElement('div');
     resetControl.className = 'maplibregl-ctrl maplibregl-ctrl-group';
     resetControl.innerHTML = `
-      <button id="map-reset-view" class="maplibregl-ctrl-icon" title="Reset View (Center on India)" style="width: 32px; height: 32px;">
+      <button id="map-reset-view" class="maplibregl-ctrl-icon tenali-control-button" title="Reset View (Center on India)" style="width: 32px; height: 32px;">
         <svg width="20" height="20" viewBox="0 0 20 20" fill="currentColor">
           <path d="M10 3v2a5 5 0 000 10v2a7 7 0 010-14zM8.5 11l-2.5 2.5L3.5 11H8.5z"/>
         </svg>
@@ -180,7 +184,7 @@ class TenaliMap {
     const drawControl = document.createElement('div');
     drawControl.className = 'maplibregl-ctrl maplibregl-ctrl-group';
     drawControl.innerHTML = `
-      <button id="map-draw-aoi" class="maplibregl-ctrl-icon" title="Select Area of Interest (Click and Drag)" style="width: 32px; height: 32px;">
+      <button id="map-draw-aoi" class="maplibregl-ctrl-icon tenali-control-button" title="Select Area of Interest (Click and Drag)" style="width: 32px; height: 32px;">
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="currentColor" stroke-width="2">
           <rect x="3" y="3" width="14" height="14" rx="1"/>
         </svg>
@@ -195,7 +199,7 @@ class TenaliMap {
     clearControl.className = 'maplibregl-ctrl maplibregl-ctrl-group';
     clearControl.style.display = 'none';
     clearControl.innerHTML = `
-      <button id="map-clear-aoi" class="maplibregl-ctrl-icon" title="Clear Area of Interest" style="width: 32px; height: 32px; background-color: #dc2626 !important;">
+      <button id="map-clear-aoi" class="maplibregl-ctrl-icon tenali-control-button" title="Clear Area of Interest" style="width: 32px; height: 32px; background-color: #dc2626 !important;">
         <svg width="20" height="20" viewBox="0 0 20 20" fill="none" stroke="white" stroke-width="2">
           <path d="M4 4l12 12M16 4L4 16"/>
         </svg>
@@ -207,6 +211,36 @@ class TenaliMap {
 
     // Store reference to the control div for show/hide
     this.controls.clearAOIControl = clearControl;
+
+    // Capture AOI button — enabled only after a rectangle is completed.
+    const captureControl = document.createElement('div');
+    captureControl.className = 'maplibregl-ctrl maplibregl-ctrl-group';
+    captureControl.style.display = 'none';
+    captureControl.innerHTML = `
+      <button id="map-capture-aoi"
+              class="maplibregl-ctrl-icon tenali-control-button"
+              title="Capture AOI Snapshot"
+              aria-label="Capture AOI Snapshot">
+        <svg width="20" height="20" viewBox="0 0 24 24"
+             fill="none" stroke="currentColor" stroke-width="2"
+             stroke-linecap="round" stroke-linejoin="round">
+          <path d="M4 7h3l2-2h6l2 2h3v11H4z"/>
+          <circle cx="12" cy="12" r="3.5"/>
+        </svg>
+      </button>
+    `;
+    this.map.getContainer().appendChild(captureControl);
+    this.controls.captureAOIControl = captureControl;
+    this.controls.captureAOIBtn =
+      captureControl.querySelector('#map-capture-aoi');
+    this.controls.captureAOIBtn.addEventListener('click', (event) => {
+      event.stopPropagation();
+      this.captureAOI();
+    });
+
+    captureControl.style.position = 'absolute';
+    captureControl.style.top = '250px';
+    captureControl.style.left = '10px';
 
     // Position custom controls
     const controlPositions = this.map.getContainer().querySelectorAll('.maplibregl-ctrl-group');
@@ -261,6 +295,10 @@ class TenaliMap {
       if (this.currentAOI) {
         this.renderAOI(this.currentAOI);
       }
+      if (this.controls.captureAOIControl) {
+        this.controls.captureAOIControl.style.display =
+          this.currentAOI ? 'block' : 'none';
+      }
     });
 
     console.log(`[TenaliMap] Basemap switched to: ${this.currentBasemap}`);
@@ -285,6 +323,10 @@ class TenaliMap {
       if (!this.isDrawingAOI) return;
 
       this.aoiStartPoint = e.lngLat;
+      this.map.dragPan.disable();
+      this.map.boxZoom.disable();
+      this.map.doubleClickZoom.disable();
+      this.map.touchZoomRotate.disable();
       this.map.getCanvas().style.cursor = 'crosshair';
 
       const onMouseMove = (e) => {
@@ -304,6 +346,10 @@ class TenaliMap {
         this.map.off('mouseup', onMouseUp);
         this.aoiStartPoint = null;
         this.isDrawingAOI = false;
+        this.map.dragPan.enable();
+        this.map.boxZoom.enable();
+        this.map.doubleClickZoom.enable();
+        this.map.touchZoomRotate.enable();
         this.map.getCanvas().style.cursor = '';
       };
 
@@ -387,8 +433,7 @@ class TenaliMap {
     // Reset draw button style
     const drawBtn = document.getElementById('map-draw-aoi');
     if (drawBtn) {
-      drawBtn.style.backgroundColor = '';
-      drawBtn.style.color = '';
+      drawBtn.classList.remove('aoi-active');
     }
 
     // Render final AOI
@@ -422,9 +467,12 @@ class TenaliMap {
       });
     }
 
-    // Show clear button
+    // Show AOI actions.
     if (this.controls.clearAOIControl) {
       this.controls.clearAOIControl.style.display = 'block';
+    }
+    if (this.controls.captureAOIControl) {
+      this.controls.captureAOIControl.style.display = 'block';
     }
 
     // Dispatch event
@@ -450,23 +498,266 @@ class TenaliMap {
    * Start drawing rectangle AOI
    */
   startDrawingAOI() {
+    this.removeAOICapture();
+
+    // If an older rectangle exists, remove it before drawing a new one.
+    if (this.currentAOI) {
+      this.clearAOI();
+    }
+
     this.isDrawingAOI = true;
     this.map.getCanvas().style.cursor = 'crosshair';
 
     // Visual feedback: highlight the draw button
     const drawBtn = document.getElementById('map-draw-aoi');
     if (drawBtn) {
-      drawBtn.style.backgroundColor = '#0891b2';
-      drawBtn.style.color = '#ffffff';
+      drawBtn.classList.add('aoi-active');
     }
 
     console.log('[TenaliMap] Click and drag to draw rectangle AOI');
   }
 
   /**
+   * Cancel an interrupted AOI drag.
+   */
+  cancelAOIDrawing() {
+    this.isDrawingAOI = false;
+    this.aoiStartPoint = null;
+
+    if (this.map) {
+      this.map.getCanvas().style.cursor = '';
+      this.map.dragPan.enable();
+      this.map.boxZoom.enable();
+      this.map.doubleClickZoom.enable();
+      this.map.touchZoomRotate.enable();
+    }
+
+    if (this.map?.getLayer('temp-aoi-fill')) this.map.removeLayer('temp-aoi-fill');
+    if (this.map?.getLayer('temp-aoi-outline')) this.map.removeLayer('temp-aoi-outline');
+    if (this.map?.getSource('temp-aoi')) this.map.removeSource('temp-aoi');
+
+    document.getElementById('map-draw-aoi')?.classList.remove('aoi-active');
+  }
+
+  /**
+   * Convert the current geographic AOI into map-canvas pixel bounds.
+   */
+  getAOIScreenBounds() {
+    if (!this.currentAOI || !this.map) return null;
+
+    const ring = this.currentAOI.geometry?.coordinates?.[0];
+    if (!ring || ring.length < 4) return null;
+
+    const points = ring.map(([lng, lat]) => this.map.project([lng, lat]));
+    return {
+      left: Math.min(...points.map(p => p.x)),
+      top: Math.min(...points.map(p => p.y)),
+      right: Math.max(...points.map(p => p.x)),
+      bottom: Math.max(...points.map(p => p.y))
+    };
+  }
+
+  /**
+   * Capture the selected AOI from the rendered MapLibre canvas as a real PNG.
+   * This is a visual map snapshot; the AOI GeoJSON remains the spatial record.
+   */
+  captureAOI() {
+    if (!this.map || !this.currentAOI) return;
+
+    const button = this.controls.captureAOIBtn;
+    if (button) {
+      button.disabled = true;
+      button.title = 'Capturing…';
+    }
+
+    this.map.redraw();
+
+    window.requestAnimationFrame(() => {
+      try {
+        const source = this.map.getCanvas();
+        const bounds = this.getAOIScreenBounds();
+        if (!bounds) throw new Error('Unable to calculate AOI pixel bounds.');
+
+        const rect = source.getBoundingClientRect();
+        const scaleX = source.width / Math.max(rect.width, 1);
+        const scaleY = source.height / Math.max(rect.height, 1);
+
+        let sx = Math.floor(bounds.left * scaleX);
+        let sy = Math.floor(bounds.top * scaleY);
+        let sw = Math.ceil((bounds.right - bounds.left) * scaleX);
+        let sh = Math.ceil((bounds.bottom - bounds.top) * scaleY);
+
+        sx = Math.max(0, Math.min(sx, source.width - 1));
+        sy = Math.max(0, Math.min(sy, source.height - 1));
+        sw = Math.max(1, Math.min(sw, source.width - sx));
+        sh = Math.max(1, Math.min(sh, source.height - sy));
+
+        // Prevent oversized output canvases on high-DPI displays.
+        const maxDimension = 4096;
+        const scale = Math.min(1, maxDimension / Math.max(sw, sh));
+        const width = Math.max(1, Math.round(sw * scale));
+        const height = Math.max(1, Math.round(sh * scale));
+
+        const output = document.createElement('canvas');
+        output.width = width;
+        output.height = height;
+
+        const ctx = output.getContext('2d');
+        if (!ctx) throw new Error('Could not create snapshot canvas.');
+
+        ctx.imageSmoothingEnabled = true;
+        ctx.imageSmoothingQuality = 'high';
+        ctx.drawImage(source, sx, sy, sw, sh, 0, 0, width, height);
+
+        output.toBlob((blob) => {
+          if (!blob) throw new Error('PNG encoding failed.');
+
+          const file = new File(
+            [blob],
+            `tenali-aoi-${new Date().toISOString().replace(/[:.]/g, '-')}.png`,
+            {type: 'image/png', lastModified: Date.now()}
+          );
+
+          if (this.aoiCapture?.url) URL.revokeObjectURL(this.aoiCapture.url);
+
+          this.aoiCapture = {
+            file,
+            url: URL.createObjectURL(blob),
+            width,
+            height,
+            geojson: this.currentAOI
+          };
+
+          this.renderAOICaptureCard();
+
+          document.dispatchEvent(new CustomEvent('aoi-capture-ready', {
+            detail: {
+              file,
+              url: this.aoiCapture.url,
+              width,
+              height,
+              geojson: this.currentAOI
+            }
+          }));
+
+          console.log('[TenaliMap] AOI snapshot captured:', file.name, file.size);
+
+          if (button) {
+            button.disabled = false;
+            button.title = 'Recapture AOI Snapshot';
+          }
+        }, 'image/png');
+      } catch (error) {
+        console.error('[TenaliMap] AOI capture failed:', error);
+        if (button) {
+          button.disabled = false;
+          button.title = 'Capture AOI Snapshot';
+        }
+        this.showAOICaptureError();
+      }
+    });
+  }
+
+  /**
+   * Create a draggable thumbnail containing the actual PNG File.
+   */
+  renderAOICaptureCard() {
+    if (!this.aoiCapture || !this.mapSection) return;
+
+    document.getElementById('aoi-capture-card')?.remove();
+
+    const card = document.createElement('div');
+    card.id = 'aoi-capture-card';
+    card.className = 'tenali-aoi-capture-card';
+    card.draggable = true;
+
+    card.innerHTML = `
+      <div class="tenali-aoi-capture-preview-wrap">
+        <img class="tenali-aoi-capture-preview"
+             src="${this.aoiCapture.url}"
+             alt="Captured AOI map snapshot">
+      </div>
+      <div class="tenali-aoi-capture-info">
+        <div class="tenali-aoi-capture-title">AOI Snapshot</div>
+        <div class="tenali-aoi-capture-meta">
+          ${this.aoiCapture.width} × ${this.aoiCapture.height} · PNG
+        </div>
+        <div class="tenali-aoi-capture-hint">
+          Drag into any image upload slot
+        </div>
+      </div>
+      <button type="button"
+              class="tenali-aoi-capture-download"
+              title="Download AOI snapshot"
+              aria-label="Download AOI snapshot">↓</button>
+    `;
+
+    card.querySelector('.tenali-aoi-capture-download')
+      .addEventListener('click', (event) => {
+        event.stopPropagation();
+        this.downloadAOICapture();
+      });
+
+    card.addEventListener('dragstart', (event) => {
+      if (!this.aoiCapture?.file || !event.dataTransfer) return;
+
+      // File payload MUST be added synchronously during dragstart.
+      event.dataTransfer.effectAllowed = 'copy';
+      event.dataTransfer.items.add(this.aoiCapture.file);
+      event.dataTransfer.setData('text/plain', 'TENALI_AOI_SNAPSHOT');
+      card.classList.add('is-dragging');
+    });
+
+    card.addEventListener('dragend', () => {
+      card.classList.remove('is-dragging');
+    });
+
+    this.mapSection.appendChild(card);
+  }
+
+  showAOICaptureError() {
+    document.getElementById('aoi-capture-card')?.remove();
+
+    if (!this.mapSection) return;
+    const card = document.createElement('div');
+    card.id = 'aoi-capture-card';
+    card.className = 'tenali-aoi-capture-card tenali-aoi-capture-error';
+    card.textContent =
+      'AOI capture failed. Try a smaller selection and capture again.';
+    this.mapSection.appendChild(card);
+    window.setTimeout(() => card.remove(), 5000);
+  }
+
+  downloadAOICapture() {
+    if (!this.aoiCapture?.url) return;
+    const a = document.createElement('a');
+    a.href = this.aoiCapture.url;
+    a.download = this.aoiCapture.file?.name || 'tenali-aoi.png';
+    document.body.appendChild(a);
+    a.click();
+    a.remove();
+  }
+
+  removeAOICapture() {
+    document.getElementById('aoi-capture-card')?.remove();
+
+    if (this.aoiCapture?.url) {
+      URL.revokeObjectURL(this.aoiCapture.url);
+    }
+
+    this.aoiCapture = null;
+
+    if (this.controls.captureAOIControl) {
+      this.controls.captureAOIControl.style.display =
+        this.currentAOI ? 'block' : 'none';
+    }
+  }
+
+  /**
    * Clear AOI
    */
   clearAOI() {
+    this.removeAOICapture();
     this.currentAOI = null;
     this.isDrawingAOI = false;
     this.aoiStartPoint = null;
@@ -500,6 +791,15 @@ class TenaliMap {
     }
 
     this.map.getCanvas().style.cursor = '';
+    this.map.dragPan.enable();
+    this.map.boxZoom.enable();
+    this.map.doubleClickZoom.enable();
+    this.map.touchZoomRotate.enable();
+
+    if (this.controls.captureAOIControl) {
+      this.controls.captureAOIControl.style.display = 'none';
+    }
+
     this.updateAnalyzeButton(false);
     console.log('[TenaliMap] AOI cleared');
   }
@@ -719,6 +1019,37 @@ class TenaliMap {
    * Setup event listeners
    */
   setupEventListeners() {
+    // Highlight existing upload/drop areas while the real AOI PNG is dragged.
+    const uploadSelectors = [
+      'input[type="file"]',
+      '[data-upload-slot]',
+      '.upload-dropzone',
+      '.drop-zone',
+      '.upload-area',
+      '.file-dropzone'
+    ].join(',');
+
+    document.addEventListener('dragover', (event) => {
+      if (!this.aoiCapture?.file) return;
+      if (!event.dataTransfer?.types?.includes('Files')) return;
+
+      const target = event.target instanceof Element
+        ? event.target.closest(uploadSelectors)
+        : null;
+
+      document.querySelectorAll('.tenali-aoi-drop-target')
+        .forEach(el => el.classList.remove('tenali-aoi-drop-target'));
+
+      if (target) {
+        target.classList.add('tenali-aoi-drop-target');
+      }
+    });
+
+    document.addEventListener('drop', (event) => {
+      document.querySelectorAll('.tenali-aoi-drop-target')
+        .forEach(el => el.classList.remove('tenali-aoi-drop-target'));
+    }, true);
+
     // Listen for result updates to render footprints
     document.addEventListener('analysis-complete', (e) => {
       if (e.detail && e.detail.footprint) {
