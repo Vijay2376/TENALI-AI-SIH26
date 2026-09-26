@@ -242,26 +242,20 @@ class TenaliMap {
     captureControl.style.top = '250px';
     captureControl.style.left = '10px';
 
-    // Position custom controls
-    const controlPositions = this.map.getContainer().querySelectorAll('.maplibregl-ctrl-group');
-    controlPositions.forEach((ctrl, idx) => {
-      ctrl.style.position = 'absolute';
-      if (idx === controlPositions.length - 5) { // Zoom
-        ctrl.style.top = '10px';
-        ctrl.style.left = '10px';
-      } else if (idx === controlPositions.length - 4) { // Basemap
-        ctrl.style.top = '90px';
-        ctrl.style.left = '10px';
-      } else if (idx === controlPositions.length - 3) { // Reset
-        ctrl.style.top = '130px';
-        ctrl.style.left = '10px';
-      } else if (idx === controlPositions.length - 2) { // Draw
-        ctrl.style.top = '170px';
-        ctrl.style.left = '10px';
-      } else if (idx === controlPositions.length - 1) { // Clear
-        ctrl.style.top = '210px';
-        ctrl.style.left = '10px';
-      }
+    // Explicit positions: do not depend on MapLibre's internal control order.
+    const positions = [
+      [zoomControl, '10px'],
+      [basemapControl, '50px'],
+      [resetControl, '90px'],
+      [drawControl, '130px'],
+      [clearControl, '170px'],
+      [captureControl, '210px']
+    ];
+
+    positions.forEach(([control, top]) => {
+      control.style.position = 'absolute';
+      control.style.top = top;
+      control.style.left = '10px';
     });
   }
 
